@@ -9,6 +9,25 @@
 
 Zeitwork is a Platform-as-a-Service that automatically builds and deploys your applications from GitHub. Connect your repository, and every commit triggers a new deployment. If your app has a Dockerfile, Zeitwork can run it. **Fully hosted, zero configuration, open source.**
 
+## 🚀 Quick Start with Docker Compose
+
+Get the complete Zeitwork development environment running in minutes:
+
+```bash
+# Clone and setup
+git clone https://github.com/smultar/zeitwork.git
+cd zeitwork
+cp .env.example .env
+
+# Start all services
+docker-compose up -d
+
+# Access the application
+open http://localhost:3000
+```
+
+📖 **Complete setup guide**: [DOCKER_SETUP.md](DOCKER_SETUP.md)
+
 ## ✨ Features
 
 - **Instant Deployments** - Push to GitHub, see your changes live in seconds

@@ -19,7 +19,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Web Application (Nuxt.js) - using local development
+  # Web Application (Nuxt.js) - using npm for simplicity
   web:
     image: node:23-alpine
     working_dir: /usr/src/app
@@ -42,7 +42,7 @@ services:
     volumes:
       - ./apps/web:/usr/src/app
       - web_node_modules:/usr/src/app/node_modules
-    command: sh -c "npm install --global bun && bun install && bun run dev --host"
+    command: sh -c "npm install && npm run dev"
     restart: unless-stopped
 
   # Backend (Go Application) - for local development

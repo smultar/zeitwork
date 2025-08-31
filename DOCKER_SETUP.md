@@ -23,8 +23,19 @@ This docker-compose configuration sets up a complete development environment for
    ```bash
    docker-compose up -d
    ```
+   
+   **⏱️ First Startup Note**: The initial startup may take 3-5 minutes as the web service needs to download and install all npm dependencies. Subsequent startups will be much faster due to volume caching.
 
-4. **Access the application**:
+4. **Monitor the startup progress**:
+   ```bash
+   # Watch the logs to see startup progress
+   docker-compose logs -f web
+   
+   # Check when services are ready
+   docker-compose ps
+   ```
+
+5. **Access the application**:
    - Web interface: http://localhost:3000
    - Backend metrics: http://localhost:8080 (if running)
    - Database: localhost:5432
@@ -120,7 +131,14 @@ The following environment variables can be configured in your `.env` file:
 
 ### Common Issues
 
-1. **Database connection errors**:
+1. **Slow initial startup**:
+   The first startup can take 3-5 minutes as npm installs all dependencies for the web application. This is normal and subsequent startups will be much faster.
+   ```bash
+   # Monitor installation progress
+   docker-compose logs -f web
+   ```
+
+2. **Database connection errors**:
    ```bash
    # Check if PostgreSQL is healthy
    docker-compose ps postgres
@@ -129,7 +147,7 @@ The following environment variables can be configured in your `.env` file:
    docker-compose restart postgres
    ```
 
-2. **Web application won't start**:
+3. **Web application won't start**:
    ```bash
    # Check the logs
    docker-compose logs web
@@ -138,7 +156,7 @@ The following environment variables can be configured in your `.env` file:
    cat .env
    ```
 
-3. **Port conflicts**:
+4. **Port conflicts**:
    ```bash
    # Check what's using the ports
    lsof -i :3000
@@ -147,7 +165,7 @@ The following environment variables can be configured in your `.env` file:
    # Change ports in docker-compose.yaml if needed
    ```
 
-4. **Backend errors** (expected):
+5. **Backend errors** (expected):
    The backend is a Kubernetes controller and will show errors about missing Kubernetes cluster. This is normal for local development.
 
 ### Resetting Everything
