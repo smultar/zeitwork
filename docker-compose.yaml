@@ -1,10 +1,73 @@
 name: "zeitwork"
 
 services:
+  # PostgreSQL Database
   postgres:
     image: postgres:17-alpine
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: zeitwork
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./apps/web/packages/database/migrations/0000_minor_la_nuit.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Web Application (Nuxt.js) - using local development
+  web:
+    image: node:23-alpine
+    working_dir: /usr/src/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      NUXT_DSN: "postgresql://postgres:postgres@postgres:5432/zeitwork?sslmode=disable"
+      NUXT_PUBLIC_GITHUB_CLIENT_ID: "${GITHUB_CLIENT_ID:-}"
+      NUXT_PUBLIC_GRAPH_ENDPOINT: "http://backend:8080/graph"
+      NUXT_SESSION_PASSWORD: "this-is-a-32-character-minimum-password-for-development"
+      NUXT_APP_URL: "http://localhost:3000"
+      NUXT_OAUTH_GITHUB_REDIRECT_URL: "http://localhost:3000/auth/github"
+      NUXT_GITHUB_APP_ID: "${GITHUB_APP_ID:-}"
+      NUXT_GITHUB_APP_PRIVATE_KEY: "${GITHUB_APP_PRIVATE_KEY:-}"
+      NUXT_KUBE_CONFIG: ""
+      NODE_ENV: "development"
+    volumes:
+      - ./apps/web:/usr/src/app
+      - web_node_modules:/usr/src/app/node_modules
+    command: sh -c "npm install --global bun && bun install && bun run dev --host"
+    restart: unless-stopped
+
+  # Backend (Go Application) - for local development
+  backend:
+    image: golang:1.24-alpine
+    working_dir: /workspace
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      CGO_ENABLED: "0"
+      GOOS: "linux"
+    volumes:
+      - ./apps/backend:/workspace
+      - backend_go_modules:/go/pkg/mod
+    command: >
+      sh -c "
+      apk add --no-cache git ca-certificates && 
+      go mod download && 
+      go build -o manager cmd/main.go && 
+      ./manager --metrics-bind-address=:8080 --health-probe-bind-address=:8081 --leader-elect=false --metrics-secure=false
+      "
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  web_node_modules:
+  backend_go_modules:
